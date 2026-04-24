@@ -1,0 +1,40 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build output
+/guided_exercise/code/mars-go
+/guided_exercise/code/*.out
+
+# Go vendor directory
+vendor/
+
+# Test coverage and profiling
+coverage.out
+coverage.html
+*.coverprofile
+*.pprof
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Go test cache
+*.test
+*.prof
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code
+.claude/

@@ -259,8 +259,8 @@ func main() {
 	ctx := context.Background()
 
 	// Shared Gemini model — swap individual agents to a different model as needed.
-	model, err := gemini.NewModel(ctx, "gemini-flash-latest", &genai.ClientConfig{
-		APIKey: os.Getenv("GEMINI_API_KEY"),
+	model, err := gemini.NewModel(ctx, "gemini-3.1-flash-lite-preview", &genai.ClientConfig{
+		APIKey: os.Getenv("GOOGLE_API_KEY"),
 	})
 	if err != nil {
 		log.Fatalf("Failed to create model: %v", err)
