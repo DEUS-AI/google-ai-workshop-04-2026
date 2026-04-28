@@ -2,12 +2,12 @@
 ## Building a Multi-Agent System with Google ADK in Go
 
 ## Objective
-In this guided exercise, you will learn how to use the Google Agent Development Kit (ADK) for Go to build a realistic multi-agent orchestration system.
+In this guided exercise, you will learn how to use the Google Agent Development Kit (ADK) for Go to build a simple multi-agent orchestration system.
 
 ## Prerequisites
 - Go 1.26 or higher installed on your machine.
 - A valid Gemini API Key (`GEMINI_API_KEY` set in your environment variables).
-- Basic familiarity with Go syntax (functions, structs, and interfaces).
+- Basic familiarity with Go syntax (functions, structs and primitive types).
 
 ## The Scenario
 You are building the AI mission control system for the upcoming Mars GO rocket launch. The final decision to launch requires gathering real-time telemetry from different departments. If an issue is detected, your agents must work together to attempt a fix before aborting the mission.
@@ -129,14 +129,146 @@ Returns:
 
 ### Milestone 1: Project Setup & Tools
 - Initialize a new Go module and import the Google ADK Go SDK.
+```bash
+go mod init mars-go
+go get google.golang.org/adk@v1.0.0
+go get google.golang.org/genai
+```
+
+Export you gemini token in as env var in your terminal:
+```bash
+export GOOGLE_API_KEY="YOUR_TOKEN"
+```
+
+Create a `main.go` file with a main function.
+
+Instantiate the model LLM as:
+
+```go
+import (
+  "google.golang.org/adk/model/gemini"
+)
+
+func main() {
+  ctx := context.Background()
+  model, err := gemini.NewModel(ctx, "gemini-3.1-flash-lite-preview", &genai.ClientConfig{
+    APIKey: os.Getenv("GOOGLE_API_KEY"),
+  })
+  if err != nil {
+    log.Fatalf("Failed to create model: %v", err)
+  }
+}
+```
+
 - Write the Go functions for GetWeather, RunDiagnostics, CalibrateEngine, and LaunchRocket.
-- Remember to add  
-  `fmt.Printf("[System] Executing Tool: %s\n", toolName)`  
-  inside each function!
+- Remember to add `fmt.Printf("[System] Executing Tool: %s\n", toolName)` inside each function!
+
+Here's the GetWeather example:
+```go
+
+type getWeatherArgs struct {
+	Location string `json:"location" jsonschema:"The location to check weather for."`
+}
+
+type WeatherReport struct {
+	WindSpeedKph  float64 `json:"wind_speed_kph"`
+	LightningRisk string  `json:"lightning_risk"`
+	Status        string  `json:"status"` // "GO" or "NO-GO"
+}
+
+func getWeather(_ tool.Context, args getWeatherArgs) (WeatherReport, error) {
+  fmt.Printf("\n[System] Executing Tool: GetWeather (Location: %s)\n", args.Location)
+
+  // add implementation
+}
+```
 
 ### Milestone 2: Agent Assembly
+
 - Instantiate the Meteorologist and Chief Engineer agents, attaching their respective tools and system instructions using the ADK `functiontool` package.
+
+Example:
+```go
+func newMeteorologist(model model.LLM) (agent.Agent, error) {
+	weatherTool, err := functiontool.New(
+		functiontool.Config{
+			Name:        "get_weather",
+			Description: "Retrieves current weather conditions (wind speed, lightning risk, GO/NO-GO status) for a given launch-site location.",
+		},
+		getWeather,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("meteorologist: weather tool: %w", err)
+	}
+
+	return llmagent.New(llmagent.Config{
+		Name:  "meteorologist",
+		Model: model,
+		Description: "...",
+		Instruction: `...`,
+		Tools: []tool.Tool{weatherTool},
+	})
+}
+```
+
 - Instantiate the Flight Director agent and link it to the agent tools using the `agenttool` package.
+
+```go
+func newFlightDirector(model model.LLM, meteorologist, chiefEngineer agent.Agent) (agent.Agent, error) {
+	// Wrap sub-agents as callable tools so the Flight Director retains
+	// control after each call and can act on the returned result.
+	metTool := agenttool.New(meteorologist, nil)
+	engTool := agenttool.New(chiefEngineer, nil)
+
+	launchTool, err := functiontool.New(
+		functiontool.Config{
+			Name:        "launch_rocket",
+			Description: "Executes the physical rocket launch sequence. Only call this when ALL departments have reported GO.",
+		},
+		launchRocket,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("flight director: launch tool: %w", err)
+	}
+
+	return llmagent.New(llmagent.Config{
+		Name:  "flight_director",
+		Model: model,
+		Description: "...",
+		Instruction: `...`,
+		Tools: []tool.Tool{metTool, engTool, launchTool},
+	})
+}
+```
+
+### Milestone 3: Launch
+- Setup the adk launcher using the flight director as root agent
+
+```go
+func main() {
+  ... // Instantiate agents
+
+  config := &launcher.Config{
+    AgentLoader: agent.NewSingleLoader(flightDirector),
+  }
+
+  l := full.NewLauncher()
+
+  fmt.Println("--- STARTING MISSION CONTROL ---")
+  fmt.Println("To test, type: 'Initiate launch sequence for the Ares-1 vehicle at Cape Canaveral.'")
+
+  if err = l.Execute(ctx, config, os.Args[1:]); err != nil {
+    log.Fatalf("Run failed: %v\n\n%s", err, l.CommandLineSyntax())
+  }
+}
+```
+- Execute the program
+
+```bash
+go run agent.go web api webui
+```
+The args web api webui will launch a web UI interface that can be used optionally.
+You can also chat directly in the command line.
 
 ---
 
