@@ -265,7 +265,7 @@ func main() {
 - Execute the program
 
 ```bash
-go run agent.go web api webui
+go run main.go web api webui
 ```
 The args web api webui will launch a web UI interface that can be used optionally.
 You can also chat directly in the command line.
