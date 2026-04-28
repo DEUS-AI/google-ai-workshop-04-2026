@@ -6,8 +6,8 @@ In this guided exercise, you will learn how to use the Google Agent Development 
 
 ## Prerequisites
 - Go 1.26 or higher installed on your machine.
-- A valid Gemini API Key (`GEMINI_API_KEY` set in your environment variables).
-- Basic familiarity with Go syntax (functions, structs and primitive types).
+- A valid Gemini API Key (`GOOGLE_API_KEY` set in your environment variables).
+- Basic familiarity with Go syntax (functions, structs, and interfaces).
 
 ## The Scenario
 You are building the AI mission control system for the upcoming Mars GO rocket launch. The final decision to launch requires gathering real-time telemetry from different departments. If an issue is detected, your agents must work together to attempt a fix before aborting the mission.

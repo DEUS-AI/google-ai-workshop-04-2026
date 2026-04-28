@@ -88,7 +88,7 @@ import (
 )
 
 // Same model and API key as Exercise 1
-model, _ := gemini.NewModel(ctx, "gemini-2.0-flash", &genai.ClientConfig{
+model, _ := gemini.NewModel(ctx, "gemini-3.1-flash-lite-preview", &genai.ClientConfig{
     APIKey: os.Getenv("GOOGLE_API_KEY"),
 })
 ```
